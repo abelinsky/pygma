@@ -87,3 +87,31 @@ and in this case the appriximate policy gradient looks like this:
 
     \nabla_\theta J(\theta) \approx \frac{1}{N} \sum_{i=1}^{N} \sum_{t=1}^{T} \nabla_\theta \mathrm{log} \: \pi_\theta (a_{it}|s_{it})
                                 \bigg( \Big( \sum_{t'=t}^{T} \gamma^{t'-t} r(s_{it'}, a_{it'}) \Big) - V_\phi^\pi(s_{it}) \bigg).
+
+Features and obstacles
+----------------------
+
+
+Pygma's classes
+---------------
+
+
+Pygma's example
+---------------
+
+.. code-block:: python
+
+   import pygma
+
+
+Suggested reading
+-----------------
+
+-  Williams (1992). Simple statistical gradient-following algorithms
+   for connectionist reinforcement learning: introduces REINFORCE algorithm
+-  Baxter & Bartlett (2001). Infinite-horizon policy-gradient estimation:
+   temporally decomposed policy gradient (not the first paper on this!
+   see actor-critic section later)
+-  Peters & Schaal (2008). Reinforcement learning of motor skills with
+   policy gradients: very accessible overview of optimal baselines and
+   natural gradient
