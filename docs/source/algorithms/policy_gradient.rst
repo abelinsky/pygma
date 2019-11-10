@@ -1,11 +1,14 @@
+.. _vanilla_policy:
+
 Vanilla Policy Gradient
 ========================
 
-Vanilla Policy Gradient (VPG) Algorithm is the simplest form of policy
+Vanilla Policy Gradient (VPG) Algorithm is the simplest form of the policy
 gradient algorithms in reinforcement learning.
 
 Idea
 ----
+
 The main idea of the algorithm is quite simple - we directly take the gradient
 of the objective function of the reinforcement learning (see below) and "climb"
 over the gradient. We calculate this gradient through sampling *trajectories* -
@@ -95,8 +98,9 @@ In practice, this can be approximated through a batch of
                             &= \frac{1}{N} \sum_{i=1}^{N} \Big( \sum_{t=1}^{T} \nabla_\theta \mathrm{log} \: \pi_\theta (a_{it}|s_{it}) \Big)
                                 \Big( \sum_{t=1}^{T} r(s_{it}, a_{it}) \Big)
 
-Given :math:`\nabla_\theta J(\theta)`, we can "climb" in the direction
-of the gradient to maximize the objective function :math:`J(\theta)`:
+Given :math:`\nabla_\theta J(\theta)` is calculated,
+we can "climb" in the direction of the gradient to maximize
+the objective function :math:`J(\theta)`:
 
 .. math::
     \theta_{k+1} = \theta_{k} + \alpha \nabla_\theta J(\theta)
@@ -104,18 +108,21 @@ of the gradient to maximize the objective function :math:`J(\theta)`:
 So, the simplest form of policy gradient algorithm, called REINFORCE
 algorithm, consists of the following steps:
 
-1. Generrate samples: run current policy :math:`\pi_\theta`
-   and sample :math:`\tau_i` (a sequence of :math:`s_{t}, a_{t}`)
-2. Calculate the gradient of the objective function:
-    .. math::
-        \nabla_\theta J(\theta) \approx \frac{1}{N} \sum_{i=1}^{N} \Big( \sum_{t=1}^{T} \nabla_\theta \mathrm{log}
-        \: \pi_\theta (a_{it}|s_{it}) \Big)
-        \Big( \sum_{t=1}^{T} r(s_{it}, a_{it}) \Big)
+1.  Generate samples: run current policy :math:`\pi_\theta`
+    and sample a set of trajectories :math:`{\tau^i}`
+    (a sequences of :math:`s_{t}, a_{t}`)
+2.  Estimate returns and compute the gradient of the objective function:
 
-3. Change the parameters of the policy:
+     .. math::
+
+         \nabla_\theta J(\theta) \approx \frac{1}{N} \sum_{i=1}^{N} \Big( \sum_{t=1}^{T} \nabla_\theta \mathrm{log}
+         \: \pi_\theta (a_{it}|s_{it}) \Big)
+         \Big( \sum_{t=1}^{T} r(s_{it}, a_{it}) \Big)
+
+3.  Update the parameters of the policy:
     :math:`\theta_{k+1} = \theta_{k} + \alpha \nabla_\theta J(\theta)`
 
-4. iterate steps 1-3.
+4.  Iterate through steps 1-3.
 
 Features and obstacles
 ----------------------
@@ -124,10 +131,13 @@ Features and obstacles
     in derivation)
 2.  But... the gradient :math:`\nabla_\theta J(\theta)` has high variance!
     It's very, very noisy!
-3.  It's an online algorithm, that means that we calculate the gradient
-    :math:`\nabla_\theta J(\theta)`, change the parameters :math:`\theta`
-    and then we have to generate new samples with the new
-    police :math:`\pi_\theta`.
+3.  It's an online (on-policy) algorithm, that means that we calculate
+    the gradient :math:`\nabla_\theta J(\theta)`, change the parameters
+    :math:`\theta` and then we have to generate new samples with the new
+    policy :math:`\pi_\theta`. For example, if our police is a neural
+    network, it changes only a little bit with each gradient step.
+    That's why on-policy learning can be extremely inefficient.
+
 4.  Practical considerations: batch size, learning rates, optimizers.
 
 

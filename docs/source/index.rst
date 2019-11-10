@@ -18,6 +18,7 @@ Welcome to pygma's documentation!
    :caption: RL Algorithms
 
    algorithms/policy_gradient
+   algorithms/variance_reduction_pg
 
 
 Indices and tables
