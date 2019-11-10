@@ -40,6 +40,12 @@ class BasePolicy:
         raise NotImplementedError
 
     def update(self, acs, obs):
+        """Updates policy.
+
+        Args:
+            acs: Actions
+            obs: Observations
+        """
         raise NotImplementedError
 
     def save(self, filename):
