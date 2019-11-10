@@ -18,16 +18,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ==============================================================================
-""" Policy gradient algorithm."""
+""" Implementation of policy gradient algorithm."""
 from pygma.agents.base_agent import BaseAgent
+from pygma.policies.mlp_policy import MLPPolicy
 
 
 class PolicyGradientAgent(BaseAgent):
-    """Policy gradient agent."""
+    """Policy gradient agent.
 
-    def __init__(self):
-        pass
+    Attributes:
+      env: An `Environment` object.
+      action_dim: Dimension of actions space, int
+      obs_dim: Dimension of observations space, int
+      n_layers: Number of hidden layers in policy network, int
+      layers_size: Size of hidden layers in policy network, int
+      is_discrete: Indicates whether actions are discrete or continuous, bool 
+      learning_rate: Learning rate, float
+      activation: Activation function in hidden layers of policy network
+    """
+
+    def __init__(self, env, action_dim, obs_dim, n_layers, layers_size, is_discrete, learning_rate, activation):
+        super(PolicyGradientAgent, self).__init__()
+        self.actor = MLPPolicy(
+            action_dim=action_dim,
+            obs_dim=obs_dim,
+            n_layers=n_layers,
+            layers_size=layers_size,
+            discrete=is_discrete,
+            learning_rate=learning_rate,
+            activation=activation
+        )
 
     def train(self):
         """See base class."""
-        raise NotImplementedError
+        print("Training policy gradient agent ...")
+
+    @property
+    def policy(self):
+        """See base class."""
+        return self.actor

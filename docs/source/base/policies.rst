@@ -1,14 +1,22 @@
 .. Contains description of agents' policies.
 
-.. _base_policies:
+.. _policies:
 
-.. automodule:: pygma.policies.base_policy
+Policies
+========
 
-Base policies
-=============
+There are several base policies implemented in the package.
 
-Common interface for all the policies of the package.
+BasePolicy
+~~~~~~~~~~
 
-.. autoclass:: BasePolicy
+.. autoclass:: pygma.policies.base_policy.BasePolicy
   :members:
-  
+  :inherited-members:
+
+MLPPolicy
+~~~~~~~~~
+
+.. autoclass:: pygma.policies.mlp_policy.MLPPolicy
+  :members:
+  :inherited-members:

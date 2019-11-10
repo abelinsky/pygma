@@ -141,11 +141,6 @@ Features and obstacles
 4.  Practical considerations: batch size, learning rates, optimizers.
 
 
-Pygma's classes
----------------
-.. autoclass:: pygma.agents.policy_gradient_agent.PolicyGradientAgent
-
-
 Pygma's example
 ---------------
 

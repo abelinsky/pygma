@@ -24,10 +24,16 @@ BasePolicy is used to define a typical API to policy instances,
 used throughout the package.
 """
 
+from abc import ABC, abstractmethod
 
-class BasePolicy:
-    """Base class for all policies of the package."""
 
+class BasePolicy(ABC):
+    """Base class for pigma's `policy` concept."""
+
+    def __init__(self, **kwargs):
+        super(BasePolicy, self).__init__(**kwargs)
+
+    @abstractmethod
     def get_action(self, obs):
         """Returns action for specific observation.
 
@@ -37,8 +43,9 @@ class BasePolicy:
         Returns:
             An action which is recommended by policy.    
         """
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def update(self, acs, obs):
         """Updates policy.
 
@@ -46,25 +53,22 @@ class BasePolicy:
             acs: Actions
             obs: Observations
         """
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def save(self, filename):
-        raise NotImplementedError
-
-    def restore(self, filename):
-        raise NotImplementedError
-
-    def test(self, a, b):
-        """Test docstring.
-
-        .. warning::
-            This function is intended as a template for documenting the code.
+        """Saves policy to disc.
 
         Args:
-            a (int): A
-            b (float): B
+            filename: File to save policy to.
+        """
+        pass
 
-        Returns:
-            bool: result
+    @abstractmethod
+    def restore(self, filename):
+        """Restores policy from file.
+
+        Args:
+            filename: File wit saved policy.
         """
         pass

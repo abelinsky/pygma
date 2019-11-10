@@ -20,18 +20,25 @@
 # ==============================================================================
 """Class to represent BaseAgent.
 
-BaseAgent is used to define an abstract class of pigma's ``Agent`` .
+BaseAgent is used to define an abstract class of pigma's ``Agent`` concept.
 """
+
 from abc import ABC, abstractmethod
 
 
 class BaseAgent(ABC):
-    """Base class for pigma's agents."""
+    """Base class for pigma's `agent` concept."""
 
-    def train(self):
-        """Train agent's policy."""
+    def __init__(self, **kwargs):
+        super(BaseAgent, self).__init__(**kwargs)
+
+    @property
+    @abstractmethod
+    def policy(self):
+        """Returns agent's policy."""
         raise NotImplementedError
 
-    def sample(self):
-        """Samples data."""
+    @abstractmethod
+    def train(self):
+        """Trains agent's policy."""
         raise NotImplementedError

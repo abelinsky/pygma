@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ==============================================================================
-"""Bring in all of the public Pygma interface into this module."""
+"""Pygma root package."""
 
 import pygma.version
 

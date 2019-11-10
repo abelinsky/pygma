@@ -1,15 +1,22 @@
 .. Contains description of pigma's RL agents.
 
-.. _base_agents:
+.. _agents:
 
-.. automodule:: pygma.agents.base_agent
+Agents
+======
 
+There are several agents that implement specific RL algorithms.
 
-Base agents
-===========
+BaseAgent
+~~~~~~~~~
 
-Common interface for all the agents of the package.
-
-.. autoclass:: BaseAgent
+.. autoclass:: pygma.agents.base_agent.BaseAgent
   :members:
-  
+  :inherited-members:
+
+PolicyGradientAgent
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: pygma.agents.policy_gradient_agent.PolicyGradientAgent
+  :members:
+  :inherited-members:

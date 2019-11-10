@@ -92,9 +92,6 @@ Features and obstacles
 ----------------------
 
 
-Pygma's classes
----------------
-
 
 Pygma's example
 ---------------
