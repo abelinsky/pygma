@@ -25,6 +25,7 @@ import numpy as np
 import time
 from pygma.policies import base_policy
 from pygma.agents import policy_gradient_agent
+from pygma.util import logger
 import tensorflow as tf
 
 
@@ -36,24 +37,25 @@ class BaseTrainer(abc.ABC):
       min_batch_size: Minimum size of the batch during training, int.
       max_rollout_length: Maximum size of each rollout, int.
       num_agent_train_steps_per_iter: Number of training steps per each iteration
+      logdir: Log directory (is used form tensorboard events)
       render: Indicates whether to render environment, bool.
     """
 
-    def __init__(self,
-                 env,
-                 min_batch_size=1000,
-                 max_rollout_length=100,
-                 num_agent_train_steps_per_iter=1,
-                 render=True):
+    def __init__(self, env, min_batch_size=1000, max_rollout_length=100, num_agent_train_steps_per_iter=1,
+                 log_metrics=True, logdir=None, render=True):
         self.env = env
         self.min_batch_size = min_batch_size
         self.max_rollout_length = max_rollout_length
         self.num_agent_train_steps_per_iter = num_agent_train_steps_per_iter
         self.render = render
-        self.log_metrics = True
+        self.log_metrics = log_metrics
+        self.logdir = logdir
         self.log_freq = 10
         # batch size to evaluate policy
         self.eval_batch_size = 400
+
+        if log_metrics:
+            self.logger = logger.Logger(logdir)
 
     @property
     @abc.abstractmethod
@@ -91,10 +93,10 @@ class BaseTrainer(abc.ABC):
                              self.num_agent_train_steps_per_iter)
 
             if self.log_metrics and itr % self.log_freq == 0:
-                self.log_evaluate(batch, self.env, self.agent.policy)
+                self.log_evaluate(batch, self.env, self.agent.policy, itr)
 
     def sample_rollouts_batch(self, collect_policy, min_batch_size, max_rollout_length, render=True):
-        """Samples one batch of the rollouts (trajectories) from the agent's 
+        """Samples one batch of the rollouts (trajectories) from the agent's
            behavior in the environment.
 
         Args:
@@ -117,15 +119,15 @@ class BaseTrainer(abc.ABC):
         """Samples one rollout from the agent's behavior in the environment.
 
         Args:
-          collect_policy: Policy which is used to sample actions, 
+          collect_policy: Policy which is used to sample actions,
             instance of `BasePolicy`
-          max_rollout_length: Maximum number of steps in the environment 
+          max_rollout_length: Maximum number of steps in the environment
             for one rollout, it
-          render: Indicates whether to render the environment. 
+          render: Indicates whether to render the environment.
             Defaults to True.
 
         Returns:
-            a dict, containing numpy arrays of observations, rewards, actions, 
+            a dict, containing numpy arrays of observations, rewards, actions,
               next observations, terminal signals (under the keys "observation",
               "reward", "action", "next_observation", "terminal")
         """
@@ -174,7 +176,7 @@ class BaseTrainer(abc.ABC):
     def transform_rollouts_batch(batch):
         """Takes a batch of rollouts and returns separate arrays,
         where each of them is a concatenation of that array from
-        across the rollout. 
+        across the rollout.
 
         Args:
           batch: A batch of rollouts, dict (see ``sample_rollout`` func)
@@ -194,13 +196,14 @@ class BaseTrainer(abc.ABC):
         terminals = np.concatenate([rollout['terminal'] for rollout in batch])
         return observations, actions, concatenated_rewards, unconcatenated_rewards, next_observations, terminals
 
-    def log_evaluate(self, train_batch, env, eval_policy):
+    def log_evaluate(self, train_batch, env, eval_policy, step):
         """Evaluates the policy and logs train and eval metrics.
 
         Args:
             train_batch: Batch of rollouts seen in training, numpy array of arrays
             env: Environment
             eval_policy: Policy to use in evaluation, instaince of `BasePolicy`
+            step: Current step, int.
         """
         print("\nCollecting data for evaluation...")
         eval_batch, eval_batch_size = self.sample_rollouts_batch(
@@ -234,6 +237,8 @@ class BaseTrainer(abc.ABC):
         # perform the logging
         for key, value in logs.items():
             print('{} : {}'.format(key, value))
+            self.logger.log_scalar(key, value, step)
+        self.logger.flush()
 
 
 class PolicyGradientTrainer(BaseTrainer):
@@ -256,9 +261,11 @@ class PolicyGradientTrainer(BaseTrainer):
                  gamma=0.99,
                  reward_to_go=False,
                  baseline=False,
-                 standardize_advantages=True):
+                 standardize_advantages=True,
+                 logdir=None,
+                 **kwargs):
         super().__init__(
-            env=env, min_batch_size=min_batch_size, max_rollout_length=max_rollout_length, render=render)
+            env=env, min_batch_size=min_batch_size, max_rollout_length=max_rollout_length, render=render, logdir=logdir)
 
         # get dimensions of action and observation spaces
         obs_dim = env.observation_space.shape[0]

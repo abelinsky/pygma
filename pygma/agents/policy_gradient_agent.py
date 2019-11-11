@@ -43,19 +43,8 @@ class PolicyGradientAgent(BaseAgent):
       standardize_advantages: Indicates whether to normalize the resulting advantages, bool
     """
 
-    def __init__(self,
-                 env,
-                 action_dim,
-                 obs_dim,
-                 n_layers,
-                 layers_size,
-                 is_discrete,
-                 learning_rate,
-                 activation,
-                 gamma,
-                 reward_to_go,
-                 baseline,
-                 standardize_advantages):
+    def __init__(self, env, action_dim, obs_dim, n_layers, layers_size, is_discrete, learning_rate,
+                 activation, gamma, reward_to_go, baseline, standardize_advantages):
         super(PolicyGradientAgent, self).__init__()
         self.actor = MLPPolicy(
             action_dim=action_dim,
