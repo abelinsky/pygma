@@ -19,11 +19,13 @@
 # THE SOFTWARE.
 # ==============================================================================
 """Class to represent `agent's` trainer."""
+import collections
 import abc
 import numpy as np
 import time
 from pygma.policies import base_policy
 from pygma.agents import policy_gradient_agent
+import tensorflow as tf
 
 
 class BaseTrainer(abc.ABC):
@@ -33,6 +35,7 @@ class BaseTrainer(abc.ABC):
       env: Environment.
       min_batch_size: Minimum size of the batch during training, int.
       max_rollout_length: Maximum size of each rollout, int.
+      num_agent_train_steps_per_iter: Number of training steps per each iteration
       render: Indicates whether to render environment, bool.
     """
 
@@ -40,11 +43,17 @@ class BaseTrainer(abc.ABC):
                  env,
                  min_batch_size=1000,
                  max_rollout_length=100,
+                 num_agent_train_steps_per_iter=1,
                  render=True):
         self.env = env
         self.min_batch_size = min_batch_size
         self.max_rollout_length = max_rollout_length
+        self.num_agent_train_steps_per_iter = num_agent_train_steps_per_iter
         self.render = render
+        self.log_metrics = True
+        self.log_freq = 10
+        # batch size to evaluate policy
+        self.eval_batch_size = 400
 
     @property
     @abc.abstractmethod
@@ -56,10 +65,10 @@ class BaseTrainer(abc.ABC):
         """Gets a rollout's size.
 
         Args:
-            rollout: a rollout, a dict (a return from `sample_rollout` func).
+          rollout: a rollout, a dict (a return from `sample_rollout` func).
 
         Returns:
-            length of the rollout, int
+          length of the rollout, int
         """
         return len(rollout["reward"])
 
@@ -68,37 +77,52 @@ class BaseTrainer(abc.ABC):
             # Generate samples: run current policy :math:`\pi_\theta`
             # and sample a set of trajectories :math:`{\tau^i}`
             # (a sequences of :math:`s_{t}, a_{t}`)
-            batch, batch_size = self.sample_rollouts_batch(
-                self.min_batch_size, self.max_rollout_length, self.render)
+            batch, batch_size = self.sample_rollouts_batch(self.agent.policy,
+                                                           self.min_batch_size,
+                                                           self.max_rollout_length,
+                                                           self.render and itr % 100 == 0)
 
             # train agent
-            self.agent.train()
+            obs, acs, conc_rews, unc_rews, next_obs, terminals = BaseTrainer.transform_rollouts_batch(
+                batch)
 
-    def sample_rollouts_batch(self, min_batch_size, max_rollout_length, render=True):
+            # perform training
+            self.agent.train(obs, acs, unc_rews,
+                             self.num_agent_train_steps_per_iter)
+
+            if self.log_metrics and itr % self.log_freq == 0:
+                self.log_evaluate(batch, self.env, self.agent.policy)
+
+    def sample_rollouts_batch(self, collect_policy, min_batch_size, max_rollout_length, render=True):
         """Samples one batch of the rollouts (trajectories) from the agent's 
            behavior in the environment.
 
         Args:
-            min_batch_size: Minimum size of transitions in the batch, int
-            max_rollout_length: Maximum size of each rollout, int
-            render: Indicates whether to render environment, bool. Defaults to True.
+          collect_policy: Policy which is used to sample actions,
+            instance of `BasePolicy`
+          min_batch_size: Minimum size of transitions in the batch, int
+          max_rollout_length: Maximum size of each rollout, int
+          render: Indicates whether to render environment, bool. Defaults to True.
         """
         batch_size = 0
         batch = []
         while batch_size <= min_batch_size:
-            rollout = self.sample_rollout(max_rollout_length, render)
+            rollout = self.sample_rollout(
+                collect_policy, max_rollout_length, render)
             batch.append(rollout)
             batch_size += BaseTrainer.get_rollout_size(rollout)
         return batch, batch_size
 
-    def sample_rollout(self, max_rollout_length, render=True):
+    def sample_rollout(self, collect_policy, max_rollout_length, render=True):
         """Samples one rollout from the agent's behavior in the environment.
 
         Args:
-            max_rollout_length: Maximum number of steps in the environment 
-              for one rollout, it
-            render: Indicates whether to render the environment. 
-              Defaults to True.
+          collect_policy: Policy which is used to sample actions, 
+            instance of `BasePolicy`
+          max_rollout_length: Maximum number of steps in the environment 
+            for one rollout, it
+          render: Indicates whether to render the environment. 
+            Defaults to True.
 
         Returns:
             a dict, containing numpy arrays of observations, rewards, actions, 
@@ -122,7 +146,7 @@ class BaseTrainer(abc.ABC):
             obs.append(ob)
 
             # query the policy
-            ac = self.agent.policy.get_action(ob)
+            ac = collect_policy.get_action(ob).numpy()
             # ac = ac[0]
             acs.append(ac)
 
@@ -140,11 +164,76 @@ class BaseTrainer(abc.ABC):
             if rollout_done:
                 break
 
-        return {"observation": np.array(obs, dtype=np.float32),
-                "reward": np.array(rewards, dtype=np.float32),
-                "action": np.array(acs, dtype=np.float32),
-                "next_observation": np.array(next_obs, dtype=np.float32),
-                "terminal": np.array(terminals, dtype=np.float32)}
+        return {'observation': np.array(obs, dtype=np.float32),
+                'reward': np.array(rewards, dtype=np.float32),
+                'action': np.array(acs, dtype=np.float32),
+                'next_observation': np.array(next_obs, dtype=np.float32),
+                'terminal': np.array(terminals, dtype=np.float32)}
+
+    @staticmethod
+    def transform_rollouts_batch(batch):
+        """Takes a batch of rollouts and returns separate arrays,
+        where each of them is a concatenation of that array from
+        across the rollout. 
+
+        Args:
+          batch: A batch of rollouts, dict (see ``sample_rollout`` func)
+
+        Returns:
+           numpy arrays of observations, actions, rewards, next_observations, terminals
+        """
+        observations = np.concatenate(
+            [rollout['observation'] for rollout in batch])
+        actions = np.concatenate([rollout['action'] for rollout in batch])
+        concatenated_rewards = np.concatenate(
+            [rollout['reward'] for rollout in batch])
+        unconcatenated_rewards = np.array(
+            [rollout['reward'] for rollout in batch])
+        next_observations = np.concatenate(
+            [rollout['next_observation'] for rollout in batch])
+        terminals = np.concatenate([rollout['terminal'] for rollout in batch])
+        return observations, actions, concatenated_rewards, unconcatenated_rewards, next_observations, terminals
+
+    def log_evaluate(self, train_batch, env, eval_policy):
+        """Evaluates the policy and logs train and eval metrics.
+
+        Args:
+            train_batch: Batch of rollouts seen in training, numpy array of arrays
+            env: Environment
+            eval_policy: Policy to use in evaluation, instaince of `BasePolicy`
+        """
+        print("\nCollecting data for evaluation...")
+        eval_batch, eval_batch_size = self.sample_rollouts_batch(
+            collect_policy=eval_policy,
+            min_batch_size=self.eval_batch_size,
+            max_rollout_length=self.max_rollout_length,
+            render=False)
+
+        # save eval metrics
+        train_returns = [rollout["reward"].sum() for rollout in train_batch]
+        eval_returns = [rollout["reward"].sum() for rollout in eval_batch]
+
+        # episode lengths, for logging
+        train_ep_lens = [len(rollout["reward"]) for rollout in train_batch]
+        eval_ep_lens = [len(rollout["reward"]) for rollout in eval_batch]
+
+        # decide what to log
+        logs = collections.OrderedDict()
+        logs["Eval_AverageReturn"] = np.mean(eval_returns)
+        logs["Eval_StdReturn"] = np.std(eval_returns)
+        logs["Eval_MaxReturn"] = np.max(eval_returns)
+        logs["Eval_MinReturn"] = np.min(eval_returns)
+        logs["Eval_AverageEpLen"] = np.mean(eval_ep_lens)
+
+        logs["Train_AverageReturn"] = np.mean(train_returns)
+        logs["Train_StdReturn"] = np.std(train_returns)
+        logs["Train_MaxReturn"] = np.max(train_returns)
+        logs["Train_MinReturn"] = np.min(train_returns)
+        logs["Train_AverageEpLen"] = np.mean(train_ep_lens)
+
+        # perform the logging
+        for key, value in logs.items():
+            print('{} : {}'.format(key, value))
 
 
 class PolicyGradientTrainer(BaseTrainer):
@@ -163,9 +252,13 @@ class PolicyGradientTrainer(BaseTrainer):
                  learning_rate=1e-4,
                  activation_function='relu',
                  is_discrete=False,
-                 render=True):
+                 render=True,
+                 gamma=0.99,
+                 reward_to_go=False,
+                 baseline=False,
+                 standardize_advantages=True):
         super().__init__(
-            env, min_batch_size, max_rollout_length, render)
+            env=env, min_batch_size=min_batch_size, max_rollout_length=max_rollout_length, render=render)
 
         # get dimensions of action and observation spaces
         obs_dim = env.observation_space.shape[0]
@@ -178,7 +271,11 @@ class PolicyGradientTrainer(BaseTrainer):
                                                                 layers_size=layers_size,
                                                                 is_discrete=is_discrete,
                                                                 learning_rate=learning_rate,
-                                                                activation=activation_function)
+                                                                activation=activation_function,
+                                                                gamma=gamma,
+                                                                reward_to_go=reward_to_go,
+                                                                baseline=baseline,
+                                                                standardize_advantages=standardize_advantages)
 
     @property
     def agent(self):

@@ -46,16 +46,6 @@ class BasePolicy(ABC):
         pass
 
     @abstractmethod
-    def update(self, acs, obs):
-        """Updates policy.
-
-        Args:
-            acs: Actions
-            obs: Observations
-        """
-        pass
-
-    @abstractmethod
     def save(self, filename):
         """Saves policy to disc.
 

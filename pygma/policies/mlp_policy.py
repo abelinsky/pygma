@@ -22,6 +22,7 @@
 from pygma.policies.base_policy import BasePolicy
 import tensorflow as tf
 from tensorflow import keras
+import tensorflow_probability as tfp
 
 
 class MLPPolicy(BasePolicy):
@@ -59,22 +60,69 @@ class MLPPolicy(BasePolicy):
 
     def _build_model(self):
         """Builds policy (multilayer neural network)."""
-        inputs = keras.Input(shape=(self.obs_dim,))
-        outputs = inputs
+        self.model = keras.Sequential()
         for _ in range(self.n_layers):
-            outputs = keras.layers.Dense(
-                self.layers_size, activation=self.activation)(outputs)
-        self.model = keras.Model(
-            inputs=inputs, outputs=outputs, name='mlp_policy')
+            self.model.add(keras.layers.Dense(self.layers_size))
+        self.model.add(keras.layers.Dense(self.action_dim))
+        self.model.build((None, self.obs_dim))
 
+    @tf.function
     def get_action(self, obs):
         """See base class."""
-        # return self.model(obs)
-        return 0
+        if len(obs.shape) > 1:
+            observation = obs
+        else:
+            observation = obs[None]
 
-    def update(self, acs, obs):
-        """See base class."""
-        raise NotImplementedError
+        if self.discrete:
+            logits = self.model(observation)
+            sampled_action = tf.squeeze(
+                tf.random.categorical(logits, 1))
+        else:
+            # TODO: implement continuos case
+            raise NotImplementedError
+
+        return sampled_action
+
+    def get_log_prob(self, acs, obs):
+        r"""Returns log probabilities of seen actions.
+
+        Args:
+            acs: Seen actions, numpy array
+            obs: Observations in which actions were seen, numpy array
+
+        Returns:
+            log \pi (a_i|o_i), naumpy array
+        """
+        if self.discrete:
+            logits = self.model(obs)
+            return tfp.distributions.Categorical(logits=logits).log_prob(acs)
+        else:
+            # TODO: implement continuos case
+            raise NotImplementedError
+
+    """
+        def define_forward_pass(self):
+        if self.discrete:
+            logits_na = build_mlp(self.observations_pl, output_size=self.ac_dim,
+                                  scope='discrete_logits', n_layers=self.n_layers, size=self.size)
+            self.parameters = logits_na
+        else:
+            mean = build_mlp(self.observations_pl, output_size=self.ac_dim,
+                             scope='continuous_logits', n_layers=self.n_layers, size=self.size)
+            logstd = tf.Variable(tf.zeros(self.ac_dim), name='logstd')
+            self.parameters = (mean, logstd)
+    """
+    """
+        if self.discrete:
+            logits_na = self.parameters
+            self.sample_ac = tf.squeeze(
+                tf.multinomial(logits_na, num_samples=1), axis=1)
+        else:
+            mean, logstd = self.parameters
+            self.sample_ac = mean + \
+                tf.exp(logstd) * tf.random_normal(tf.shape(mean), 0, 1)
+    """
 
     def save(self, filename):
         """See base class."""

@@ -23,22 +23,53 @@
 BaseAgent is used to define an abstract class of pigma's ``Agent`` concept.
 """
 
-from abc import ABC, abstractmethod
+import abc
 
 
-class BaseAgent(ABC):
+class BaseAgent(abc.ABC):
     """Base class for pigma's `agent` concept."""
 
     def __init__(self, **kwargs):
         super(BaseAgent, self).__init__(**kwargs)
 
     @property
-    @abstractmethod
+    @abc.abstractmethod
     def policy(self):
         """Returns agent's policy."""
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
-    def train(self):
-        """Trains agent's policy."""
-        raise NotImplementedError
+    @abc.abstractmethod
+    def train(self, obs, acs, rews, num_steps):
+        """Trains agent's policy.
+
+        Args:
+            obs: Observations, numpy array
+            acs: Actions, numpy array
+            rews: Rewards, numpy array
+            num_steps: Number of gradient descent steps in training, int
+        """
+        pass
+
+    @abc.abstractmethod
+    def update_policy(self, obs, next_obs, acs, rews, terminals):
+        """Updates agent's policy.
+
+        Args:
+            obs: Observations, numpy array
+            next_obs: Next observations, numpy array
+            acs: Actions, numpy array
+            rews: Rewards, numpy array
+            terminals: Terminals, 1 if rollout has been done, 0 otherwise, numpy array
+        """
+        pass
+
+    def get_action(self, obs):
+        """Returns action for specific observation.
+
+        Args:
+            obs: observation of the environment.
+
+        Returns:
+            An action which is recommended by agents' policy.    
+        """
+        return self.policy.get_action(obs)
