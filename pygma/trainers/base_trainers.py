@@ -25,7 +25,7 @@ import numpy as np
 import time
 from pygma.policies import base_policy
 from pygma.agents import policy_gradient_agent
-from pygma.util import logger
+from pygma.utils import logger
 import tensorflow as tf
 
 
@@ -75,6 +75,11 @@ class BaseTrainer(abc.ABC):
         return len(rollout["reward"])
 
     def train_agent(self, n_iter):
+        """Trains agent.
+
+        Args:
+            n_iter: Number of iterations, int.
+        """
         for itr in range(n_iter):
             # Generate samples: run current policy :math:`\pi_\theta`
             # and sample a set of trajectories :math:`{\tau^i}`
@@ -254,23 +259,54 @@ class PolicyGradientTrainer(BaseTrainer):
                  max_rollout_length=100,
                  n_layers=2,
                  layers_size=64,
-                 learning_rate=1e-4,
+                 learning_rate=5e-3,
                  activation_function='relu',
                  is_discrete=False,
                  render=True,
-                 gamma=0.99,
+                 gamma=1.,
                  reward_to_go=False,
                  baseline=False,
-                 standardize_advantages=True,
+                 standardize_advantages=False,
                  logdir=None,
                  **kwargs):
+        """# These properties should be set by the user via keyword arguments.
+        # note that 'dtype', 'input_shape' and 'batch_input_shape'
+        # are only applicable to input layers: do not pass these keywords
+        # to non-input layers.
+        allowed_kwargs = {
+            'input_shape',
+            'batch_input_shape',
+            'batch_size',
+            'weights',
+            'activity_regularizer',
+            'autocast'
+        }
+        # Validate optional keyword arguments.
+        generic_utils.validate_kwargs(kwargs, allowed_kwargs)
+
+        self._autocast = kwargs.get('autocast',
+                            base_layer_utils.v2_dtype_behavior_enabled())
+
+
+        self._maybe_create_attribute('_trainable_weights', [])
+        https://github.com/tensorflow/tensorflow/blob/980ec8b3913d652cf7060b77dd786f54a490d171/tensorflow/python/keras/engine/base_layer.py#L2167
+
+        decay = kwargs.pop("decay", 0.0)
+        """
+
         super().__init__(
-            env=env, min_batch_size=min_batch_size, max_rollout_length=max_rollout_length, render=render, logdir=logdir)
+            env=env,
+            min_batch_size=min_batch_size,
+            max_rollout_length=max_rollout_length,
+            render=render,
+            log_metrics=True,
+            logdir=logdir)
 
         # get dimensions of action and observation spaces
         obs_dim = env.observation_space.shape[0]
         ac_dim = env.action_space.n if is_discrete else self.env.action_space.shape[0]
 
+        # create Policy Gradient Agent
         self._agent = policy_gradient_agent.PolicyGradientAgent(env=env,
                                                                 action_dim=ac_dim,
                                                                 obs_dim=obs_dim,

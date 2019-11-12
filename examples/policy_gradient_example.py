@@ -26,9 +26,12 @@ def main():
     max_rollout_length = env.spec.max_episode_steps
 
     # create trainer and train
-    pgtrainer = trainers.PolicyGradientTrainer(env, is_discrete=discrete,
+    pgtrainer = trainers.PolicyGradientTrainer(env,
+                                               is_discrete=discrete,
                                                max_rollout_length=max_rollout_length,
-                                               logdir=logdir)
+                                               logdir=logdir,
+                                               reward_to_go=True,
+                                               baseline=True)
     pgtrainer.train_agent(1000)
 
 

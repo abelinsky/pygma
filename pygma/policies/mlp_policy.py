@@ -46,6 +46,7 @@ class MLPPolicy(BasePolicy):
                  discrete,
                  learning_rate=1e-4,
                  activation='relu',
+                 baseline=False,
                  **kwargs):
         super(MLPPolicy, self).__init__(**kwargs)
         self.action_dim = action_dim
@@ -55,8 +56,12 @@ class MLPPolicy(BasePolicy):
         self.discrete = discrete
         self.learning_rate = learning_rate
         self.activation = activation
+        self.baseline = baseline
 
         self._build_model()
+
+        if self.baseline:
+            self._build_baseline_model()
 
     def _build_model(self):
         """Builds policy (multilayer neural network)."""
@@ -65,6 +70,45 @@ class MLPPolicy(BasePolicy):
             self.model.add(keras.layers.Dense(self.layers_size))
         self.model.add(keras.layers.Dense(self.action_dim))
         self.model.build((None, self.obs_dim))
+
+    def _build_baseline_model(self):
+        """Builds baseline neural network."""
+        self._baseline_model = keras.Sequential()
+        for _ in range(self.n_layers):
+            self._baseline_model.add(keras.layers.Dense(self.layers_size))
+        # One output for baseline prediction
+        self._baseline_model.add(keras.layers.Dense(1))
+        self._baseline_model.build((None, self.obs_dim))
+
+    def get_baseline_prediction(self, obs):
+        r"""Returns baseline neural network prediction for specified observation.
+
+            This is a *state-dependent* baseline - a sort of *value function* that can be
+            trained to approximate the sum of future rewards starting from a
+            particular state:
+
+            .. math::
+
+                V_\phi^\pi(s_t) = \sum_{t'=t}^{T} \mathbb{E}_{\pi_\theta} \big[ r(s_{t'}, a_{t'}) | s_t \big]
+
+        Args:
+            obs: Observation, numpy array
+
+        Raises:
+            AttributeError: in the case when `baseline` flag was not set for this policy.
+
+        Returns:
+            Baseline prediction, tensor with float value.
+        """
+        if not self.baseline:
+            raise AttributeError(
+                "Get baseline prediction failed because baseline flag was not set for this policy.")
+        if len(obs.shape) > 1:
+            observation = obs
+        else:
+            observation = obs[None]
+        return tf.squeeze(
+            self._baseline_model(observation))
 
     @tf.function
     def get_action(self, obs):

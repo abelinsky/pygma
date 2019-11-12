@@ -18,52 +18,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ==============================================================================
-"""Class to represent BasePolicy.
-
-BasePolicy is used to define a typical API to policy instances,
-used throughout the package.
-"""
-
-from abc import ABC, abstractmethod
+"""Utilities for logging to tensorboard."""
+import tensorflow as tf
 
 
-class BasePolicy(ABC):
-    """Base policy class.
+class Logger:
+    """Class for logging events.
 
-    This is the class from which all policies inherit.
-
-    This class contains API definitions for ``policy``.
+    Attributes:
+      logdir: Directory where log to
     """
 
-    def __init__(self, **kwargs):
-        super(BasePolicy, self).__init__(**kwargs)
+    def __init__(self, logdir):
+        self.logdir = logdir
+        self.writer = tf.summary.create_file_writer(logdir)
 
-    @abstractmethod
-    def get_action(self, obs):
-        """Returns action for specific observation.
-
-        Args:
-            obs: observation of the environment.
-
-        Returns:
-            An action which is recommended by policy.    
-        """
-        pass
-
-    @abstractmethod
-    def save(self, filename):
-        """Saves policy to disc.
+    def log_scalar(self, name, value, step):
+        """Logs one scalar value.
 
         Args:
-            filename: File to save policy to.
+            name: Scalar value name, str
+            value: Scalar value, any
+            step: The number of current step, int
         """
-        pass
+        with self.writer.as_default():
+            tf.summary.scalar(name, value, step=step)
 
-    @abstractmethod
-    def restore(self, filename):
-        """Restores policy from file.
-
-        Args:
-            filename: File wit saved policy.
-        """
-        pass
+    def flush(self):
+        """Makes actual log."""
+        self.writer.flush()
