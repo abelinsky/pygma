@@ -5,10 +5,43 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Experiment with PG",
+            "name": "HalfCheetah PG (continuous)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/policy_gradient_example.py",
+            "program": "${workspaceFolder}/examples/Half_Cheetah_pg.py",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "LunarLander PG (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/LunarLander_v2_pg",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "Humanoid PG (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/Humanoid_v2_pg",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "Discrete env policy gradient",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/discrete_env_CartPolev0.py",
             "console": "integratedTerminal"
         }
     ]

@@ -15,6 +15,8 @@ over the gradient. We calculate this gradient through sampling *trajectories* -
 sets of environment's states and actions, recommended by our *policy*.
 Intuitively, we try to make "good" trajectories (with high *rewards*)
 more likely and "bad" trajectories (with low *rewards*) less likely.
+We try to increase the probabilities of choosing actions that lead
+to higher rewards, and decrease the probabilities of other actions.
 The whole math simply formalizes the notion of "trial and error".
 
 Mathematics

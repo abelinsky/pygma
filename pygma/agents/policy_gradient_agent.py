@@ -37,14 +37,14 @@ class PolicyGradientAgent(BaseAgent):
       is_discrete: Indicates whether actions are discrete or continuous, bool 
       learning_rate: Learning rate, float
       activation: Activation function in hidden layers of policy network
-      gamma: Discount factor, float
+      discount: Discount factor, float
       reward_to_go: Indicates whether to apply reward to go, bool
       baseline: Indicates whether to use baseline for gradient estimation, bool
       standardize_advantages: Indicates whether to normalize the resulting advantages, bool
     """
 
     def __init__(self, env, action_dim, obs_dim, n_layers, layers_size, is_discrete, learning_rate,
-                 activation, gamma, reward_to_go, baseline, standardize_advantages):
+                 activation, discount, reward_to_go, baseline, standardize_advantages):
         super(PolicyGradientAgent, self).__init__()
         self.actor = MLPPolicy(
             action_dim=action_dim,
@@ -57,7 +57,7 @@ class PolicyGradientAgent(BaseAgent):
             baseline=baseline
         )
         self.reward_to_go = reward_to_go
-        self.gamma = gamma
+        self.discount = discount
         self.baseline = baseline
         self.standardize_advantages = standardize_advantages
         self.learning_rate = learning_rate
@@ -68,23 +68,24 @@ class PolicyGradientAgent(BaseAgent):
         return self.actor
 
     def train(self, obs, acs, rews, num_steps):
-        """See base class.
+        r"""See base class.
 
-        Training a PolicyGradient agent means updating its policy (actor) with thr given observations/actions
+        Training a PolicyGradient agent means updating its policy (actor) with the given observations/actions
         and the calculated qvals/advantages that come from the seen rewards.
 
         The expression for the policy gradient is
 
-                PG = E_{tau} [sum_{t=0}^{T-1} grad log pi(a_t|s_t) * (Q_t - b_t )]
+            .. math::
+                \nabla J_\theta = E_{\tau} \Big[\sum_{t=0}^{T-1} \nabla \mathrm{log} \: \pi_\theta(a_t|s_t) * (Q_t - b_t ) \Big]
 
-            where 
-                tau=(s_0, a_0, s_1, a_1, s_2, a_2, ...) is a trajectory,
-                Q_t is the Q-value at time t, Q^{pi}(s_t, a_t),
-                b_t is a baseline which may depend on s_t,
-                and (Q_t - b_t ) is the advantage.
+        where: 
+          -  :math:`\tau=(s_0, a_0, s_1, a_1, s_2, a_2, ...)` is a trajectory,
+          -  :math:`Q_t` is the *Q*-value at time *t*, :math:`Q^{\pi}(s_t, a_t)`,
+          -  :math:`b_t` is a baseline which may depend on :math:`s_t`,
+          -  :math:`(Q_t - b_t)` is the advantage.
 
-            Policy gradient update needs (s_t, a_t, q_t, adv_t),
-                and that is exactly what this function provides.
+        Policy gradient update needs :math:`(s_t, a_t, q_t, adv_t)`,
+        and that is exactly what this function provides.
         """
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
@@ -96,7 +97,7 @@ class PolicyGradientAgent(BaseAgent):
                 q_values = self.calculate_q_values(rews)
                 adv = self.estimate_advantages(q_values, obs)
                 # minus because we wan to maximize cumulative reward
-                pg_loss = tf.math.reduce_sum(-tf.multiply(logprob, adv))
+                pg_loss = -tf.math.reduce_sum(tf.multiply(logprob, adv))
 
                 # Compute the loss value for baseline prediction
                 baseline_targets = (
@@ -105,17 +106,23 @@ class PolicyGradientAgent(BaseAgent):
                 baseline_loss = tf.keras.losses.MSE(
                     baseline_targets, baseline_predictions)
 
+            # 1. Upgrade model
             # Use the gradient tape to automatically retrieve
             # the gradients of the trainable variables with respect to the loss.
             pg_grads = tape.gradient(
                 pg_loss, self.policy.model.trainable_weights)
-
             # Run one step of gradient descent by updating
             # the value of the variables to minimize the loss.
             optimizer.apply_gradients(
                 zip(pg_grads, self.policy.model.trainable_weights))
 
-            # do the same for baselines
+            # 2. If countinuous, upgrade std
+            if not self.policy.discrete:
+                stdgrad = tape.gradient(pg_loss, [self.policy.logstd])
+                optimizer.apply_gradients(
+                    zip(stdgrad, [self.policy.logstd]))
+
+            # 3. Update baselines
             baseline_grads = tape.gradient(
                 baseline_loss, self.policy._baseline_model.trainable_weights)
             optimizer.apply_gradients(
@@ -137,21 +144,21 @@ class PolicyGradientAgent(BaseAgent):
         """
 
         if not self.reward_to_go:
-            # q(s_t, a_t) = \sum_{t=0}^{T-1} gamma^t r_t
+            # q(s_t, a_t) = \sum_{t=0}^{T-1} discount^t r_t
             q_values = np.concatenate(
                 [self._discounted_rewards(r) for r in rews_list])
         else:
-            # q(s_t, a_t) = sum_{t'=t}^{T-1} gamma^(t'-t) * r_{t'}
+            # q(s_t, a_t) = sum_{t'=t}^{T-1} discount^(t'-t) * r_{t'}
             q_values = np.concatenate(
                 [self._discounted_reward_to_go(r) for r in rews_list])
 
         return q_values
 
     def estimate_advantages(self, q_values, obs):
-        """Estimates advantages by substracting a baseline (if possible)
-          from the sum of the rewards to reduce variance. This can be thought
-          as selecting actions that are in some sense better than the *mean* 
-          action in that state.  
+        """Estimates advantages by substracting a baseline (if possible) from the sum of the rewards.
+
+        This can be thought as selecting actions that are in some sense better than the mean 
+        action in that state.  
 
         Args:
           q_values: Q-values estimates, length 
@@ -186,13 +193,13 @@ class PolicyGradientAgent(BaseAgent):
           rews: a list of rewards for a particular rollout, numpy array.
 
         Returns:
-          a list where each entry corresponds to sum_{t=0}^{T-1} gamma^t r_{t}.
+          a list where each entry corresponds to sum_{t=0}^{T-1} discount^t r_{t}.
 
           .. note::
             All entries in return are equivalent, because function doesn't involve `reward-to-go`.
         """
         T = len(rews)
-        discounts = self.gamma ** np.arange(T)
+        discounts = self.discount ** np.arange(T)
         disc_rews = rews * discounts
         disc_rews_sum = np.sum(disc_rews)
         return [disc_rews_sum] * T
@@ -204,30 +211,18 @@ class PolicyGradientAgent(BaseAgent):
           rews: a list of rewards for a single rollout, numpy array of length T.
 
         Returns:
-          a list of length t where the entry in inde t corresponds to q(s_t, a_t) = sum_{t'=t}^{T-1} gamma^(t'-t) * r_{t'}.
+          a list of length t where the entry in inde t corresponds to q(s_t, a_t) = sum_{t'=t}^{T-1} discount^(t'-t) * r_{t'}.
         """
         T = len(rews)
 
         all_discounted_cumsums = []
 
         T = len(rews)
-        # for loop over steps (t) of the given rollout
         for start_time_index in range(T):
-
-            # 1) create a list of indices (t'): goes from t to T-1
             indices = np.arange(start_time_index, T)
-
-            # 2) create a list where the entry at each index (t') is gamma^(t'-t)
-            discounts = self.gamma ** (indices - start_time_index)
-
-            # 3) create a list where the entry at each index (t') is gamma^(t'-t) * r_{t'}
-            # Hint: remember that t' goes from t to T-1, so you should use the rewards from those indices as well
+            discounts = self.discount ** (indices - start_time_index)
             discounted_rtg = discounts * rews[start_time_index:]
-
-            # 4) calculate a scalar: sum_{t'=t}^{T-1} gamma^(t'-t) * r_{t'}
             sum_discounted_rtg = np.sum(discounted_rtg)
-
-            # appending each of these calculated sums into the list to return
             all_discounted_cumsums.append(sum_discounted_rtg)
 
         list_of_discounted_cumsums = np.array(all_discounted_cumsums)

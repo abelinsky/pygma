@@ -64,12 +64,24 @@ class MLPPolicy(BasePolicy):
             self._build_baseline_model()
 
     def _build_model(self):
-        """Builds policy (multilayer neural network)."""
+        """Builds policy (multilayer neural network).
+
+        If the environment is discrete, the outputs from neural network
+        refer to logits of categorical distribution from which one can
+        sample discrete actions. If it is continuous, the outputs refer 
+        to the mean of normal distribution and another variable for 
+        standard deviation is involved.    
+        """
         self.model = keras.Sequential()
         for _ in range(self.n_layers):
             self.model.add(keras.layers.Dense(self.layers_size))
         self.model.add(keras.layers.Dense(self.action_dim))
         self.model.build((None, self.obs_dim))
+
+        # If environment is continuous then create trainable variable for
+        # standard deviation
+        if not self.discrete:
+            self.logstd = tf.Variable(tf.zeros(self.action_dim), name='logstd')
 
     def _build_baseline_model(self):
         """Builds baseline neural network."""
@@ -80,12 +92,34 @@ class MLPPolicy(BasePolicy):
         self._baseline_model.add(keras.layers.Dense(1))
         self._baseline_model.build((None, self.obs_dim))
 
+    @tf.function
+    def get_action(self, obs):
+        """See base class."""
+        if len(obs.shape) > 1:
+            observation = obs
+        else:
+            observation = obs[None]
+
+        if self.discrete:
+            logits = self.model(observation)
+            # Sample action from categorical distribution
+            # where logits are outputs from neural network
+            sampled_action = tf.squeeze(
+                tf.random.categorical(logits, 1))
+        else:
+            mean = self.model(observation)
+            logstd = self.logstd
+            sampled_action = tf.squeeze(
+                mean + tf.exp(logstd) * tf.random.normal(tf.shape(mean), 0, 1))
+
+        return sampled_action
+
     def get_baseline_prediction(self, obs):
         r"""Returns baseline neural network prediction for specified observation.
 
-            This is a *state-dependent* baseline - a sort of *value function* that can be
-            trained to approximate the sum of future rewards starting from a
-            particular state:
+        This is a *state-dependent* baseline - a sort of *value function* that can be
+        trained to approximate the sum of future rewards starting from a
+        particular state:
 
             .. math::
 
@@ -95,7 +129,7 @@ class MLPPolicy(BasePolicy):
             obs: Observation, numpy array
 
         Raises:
-            AttributeError: in the case when `baseline` flag was not set for this policy.
+            AttributeError: If `baseline` flag was not set for this policy.
 
         Returns:
             Baseline prediction, tensor with float value.
@@ -110,63 +144,29 @@ class MLPPolicy(BasePolicy):
         return tf.squeeze(
             self._baseline_model(observation))
 
-    @tf.function
-    def get_action(self, obs):
-        """See base class."""
-        if len(obs.shape) > 1:
-            observation = obs
-        else:
-            observation = obs[None]
-
-        if self.discrete:
-            logits = self.model(observation)
-            sampled_action = tf.squeeze(
-                tf.random.categorical(logits, 1))
-        else:
-            # TODO: implement continuos case
-            raise NotImplementedError
-
-        return sampled_action
-
     def get_log_prob(self, acs, obs):
         r"""Returns log probabilities of seen actions.
 
         Args:
-            acs: Seen actions, numpy array
-            obs: Observations in which actions were seen, numpy array
+            acs: Seen actions (numpy array).
+            obs: Observations in which actions were seen (numpy array).
 
         Returns:
-            log \pi (a_i|o_i), naumpy array
+            :math:`\mathrm{log} \: \pi (a_i|o_i)`, log probabilities (numpy array).
         """
         if self.discrete:
+            # log probability under categorical distribution
             logits = self.model(obs)
-            return tfp.distributions.Categorical(logits=logits).log_prob(acs)
+            logprob = tfp.distributions.Categorical(
+                logits=logits).log_prob(acs)
         else:
-            # TODO: implement continuos case
-            raise NotImplementedError
+            # log probability under a multivariate gaussian
+            mean = self.model(obs)
+            logstd = self.logstd
+            logprob = tfp.distributions.MultivariateNormalDiag(
+                loc=mean, scale_diag=tf.exp(logstd)).log_prob(acs)
 
-    """
-        def define_forward_pass(self):
-        if self.discrete:
-            logits_na = build_mlp(self.observations_pl, output_size=self.ac_dim,
-                                  scope='discrete_logits', n_layers=self.n_layers, size=self.size)
-            self.parameters = logits_na
-        else:
-            mean = build_mlp(self.observations_pl, output_size=self.ac_dim,
-                             scope='continuous_logits', n_layers=self.n_layers, size=self.size)
-            logstd = tf.Variable(tf.zeros(self.ac_dim), name='logstd')
-            self.parameters = (mean, logstd)
-    """
-    """
-        if self.discrete:
-            logits_na = self.parameters
-            self.sample_ac = tf.squeeze(
-                tf.multinomial(logits_na, num_samples=1), axis=1)
-        else:
-            mean, logstd = self.parameters
-            self.sample_ac = mean + \
-                tf.exp(logstd) * tf.random_normal(tf.shape(mean), 0, 1)
-    """
+        return logprob
 
     def save(self, filename):
         """See base class."""
