@@ -74,7 +74,8 @@ class MLPPolicy(BasePolicy):
         """
         self.model = keras.Sequential()
         for _ in range(self.n_layers):
-            self.model.add(keras.layers.Dense(self.layers_size))
+            self.model.add(keras.layers.Dense(
+                self.layers_size, activation=self.activation))
         self.model.add(keras.layers.Dense(self.action_dim))
         self.model.build((None, self.obs_dim))
 
@@ -109,8 +110,9 @@ class MLPPolicy(BasePolicy):
         else:
             mean = self.model(observation)
             logstd = self.logstd
+            sigma = tf.exp(logstd)
             sampled_action = tf.squeeze(
-                mean + tf.exp(logstd) * tf.random.normal(tf.shape(mean), 0, 1))
+                mean + sigma * tf.random.normal(tf.shape(mean), 0, 1))
 
         return sampled_action
 
@@ -163,8 +165,9 @@ class MLPPolicy(BasePolicy):
             # log probability under a multivariate gaussian
             mean = self.model(obs)
             logstd = self.logstd
+            sigma = tf.exp(logstd)
             logprob = tfp.distributions.MultivariateNormalDiag(
-                loc=mean, scale_diag=tf.exp(logstd)).log_prob(acs)
+                loc=mean, scale_diag=sigma).log_prob(acs)
 
         return logprob
 

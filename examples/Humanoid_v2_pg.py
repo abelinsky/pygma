@@ -48,9 +48,10 @@ def main():
     discrete = isinstance(env.action_space, gym.spaces.Discrete)
 
     # create trainer and train
+    n_iter = 1000
     pgtrainer = trainers.PolicyGradientTrainer(env,
                                                is_discrete=discrete,
-                                               max_rollout_length=2000,
+                                               max_rollout_length=1000,
                                                logdir=logdir,
                                                reward_to_go=True,
                                                baseline=True,
@@ -58,9 +59,9 @@ def main():
                                                min_batch_size=10000,
                                                learning_rate=0.005,
                                                render=True,
-                                               render_freq=20,
-                                               log_freq=3)
-    pgtrainer.train_agent(1000)
+                                               render_freq=n_iter/10,
+                                               log_freq=1)
+    pgtrainer.train_agent(n_iter)
 
 
 if __name__ == "__main__":

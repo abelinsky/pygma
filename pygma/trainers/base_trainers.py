@@ -81,7 +81,7 @@ class BaseTrainer(abc.ABC):
         self.layers_size = kwargs.pop('layers_size', 64)
         self.learning_rate = kwargs.pop('learning_rate', 5e-3)
         self.discount = kwargs.pop('discount', 1.0)
-        self.activation_function = kwargs.pop('activation_function', 'relu')
+        self.activation_function = kwargs.pop('activation_function', 'tanh')
 
         self.is_discrete = kwargs.pop('is_discrete', True)
 
@@ -94,7 +94,7 @@ class BaseTrainer(abc.ABC):
         self.render_freq = kwargs.pop('render_freq', 100)
         self.log_metrics = kwargs.pop('log_metrics', True)
         self.logdir = kwargs.pop('logdir', None)
-        self.log_freq = kwargs.pop('log_freq', 10)
+        self.log_freq = kwargs.pop('log_freq', 1)
         self.eval_batch_size = kwargs.pop('eval_batch_size', 400)
 
         if self.log_metrics:
@@ -124,6 +124,7 @@ class BaseTrainer(abc.ABC):
             n_iter: Number of iterations, int.
         """
         for itr in range(n_iter):
+            print(f"\n\n************** Iteration {itr} **************")
             # Generate samples: run current policy :math:`\pi_\theta`
             # and sample a set of trajectories :math:`{\tau^i}`
             # (a sequences of :math:`s_{t}, a_{t}`)

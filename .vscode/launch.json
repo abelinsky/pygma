@@ -30,7 +30,7 @@
             "name": "Humanoid PG (continuous)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/Humanoid_v2_pg",
+            "program": "${workspaceFolder}/examples/Humanoid_v2_pg.py",
             "console": "integratedTerminal",
             "env": {
                 "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",

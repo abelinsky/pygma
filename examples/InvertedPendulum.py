@@ -26,7 +26,7 @@ def main():
             # Memory growth must be set before GPUs have been initialized
             print(e)
 
-    env_name = 'HalfCheetah-v2'
+    env_name = 'InvertedPendulum-v2'
 
     # create data dir
     data_path = os.path.join(os.path.dirname(
@@ -43,21 +43,21 @@ def main():
     # set up env
     env = gym.make(env_name)
     discrete = isinstance(env.action_space, gym.spaces.Discrete)
+    max_rollout_length = env.spec.max_episode_steps
 
     # create trainer and train
     pgtrainer = trainers.PolicyGradientTrainer(env,
                                                is_discrete=discrete,
-                                               max_rollout_length=150,
+                                               max_rollout_length=1000,
                                                logdir=logdir,
                                                reward_to_go=True,
-                                               baseline=True,
-                                               discount=0.95,
+                                               discount=0.9,
+                                               min_batch_size=2500,
+                                               learning_rate=0.005,
                                                n_layers=2,
-                                               layers_size=32,
-                                               min_batch_size=50000,
-                                               learning_rate=0.02,
-                                               render=False)
-    pgtrainer.train_agent(100)
+                                               layers_size=64,
+                                               render=True)
+    pgtrainer.train_agent(1000)
 
 
 if __name__ == "__main__":

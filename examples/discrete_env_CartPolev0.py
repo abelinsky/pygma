@@ -31,7 +31,10 @@ def main():
                                                max_rollout_length=max_rollout_length,
                                                logdir=logdir,
                                                reward_to_go=True,
-                                               baseline=True)
+                                               baseline=True,
+                                               n_layers=2,
+                                               layers_size=32,
+                                               min_batch_size=5000)
     pgtrainer.train_agent(1000)
 
 
