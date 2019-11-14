@@ -10,13 +10,13 @@ There are several base policies implemented in the package.
 BasePolicy
 ~~~~~~~~~~
 
-.. autoclass:: pygma.policies.base_policy.BasePolicy
+.. autoclass:: pygma.rl.base_policies.BasePolicy
   :members:
   :inherited-members:
 
 MLPPolicy
 ~~~~~~~~~
 
-.. autoclass:: pygma.policies.mlp_policy.MLPPolicy
+.. autoclass:: pygma.rl.base_policies.MLPPolicy
   :members:
   :inherited-members:

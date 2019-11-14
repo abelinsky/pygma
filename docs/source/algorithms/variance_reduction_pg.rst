@@ -88,9 +88,6 @@ and in this case the appriximate policy gradient looks like this:
     \nabla_\theta J(\theta) \approx \frac{1}{N} \sum_{i=1}^{N} \sum_{t=1}^{T} \nabla_\theta \mathrm{log} \: \pi_\theta (a_{it}|s_{it})
                                 \bigg( \Big( \sum_{t'=t}^{T} \gamma^{t'-t} r(s_{it'}, a_{it'}) \Big) - V_\phi^\pi(s_{it}) \bigg).
 
-Features and obstacles
-----------------------
-
 
 
 Pygma's example
@@ -98,8 +95,21 @@ Pygma's example
 
 .. code-block:: python
 
-   import pygma
+   import gym
+   from pygma.rl.reinforce.agent import agent as reinforce_agent
 
+   # create env
+   env = gym.make(env_name)
+
+   # create agent
+   agent_ = reinforce_agent.ReinforceAgent(
+        env,
+        reward_to_go=True,
+        discount=0.99,
+        baseline=True)
+
+   # train agent
+   agent_.run_training_loop(1000)
 
 Suggested reading
 -----------------

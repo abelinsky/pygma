@@ -1,12 +1,9 @@
 import os
 import time
 import pygma
-from pygma.trainers import base_trainers as trainers
 import gym
 import tensorflow as tf
-
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
+from pygma.rl.reinforce import agent as reinforce_agent
 
 
 def main():
@@ -42,25 +39,30 @@ def main():
 
     # set up env
     env = gym.make(env_name)
-    discrete = isinstance(env.action_space, gym.spaces.Discrete)
 
-# python train_pg_f18.py LunarLanderContinuous-v2 -ep 1000
-# --discount 0.99 -n 100 -e 3 -l 2 -s 64 -b 40000 -lr 0.005 -rtg --nn_baseline --exp_name ll_b40000_r0.005
+    # create env
+    env = gym.make(env_name)
 
-    # create trainer and train
-    pgtrainer = trainers.PolicyGradientTrainer(env,
-                                               is_discrete=discrete,
-                                               max_rollout_length=1000,
-                                               logdir=logdir,
-                                               reward_to_go=True,
-                                               baseline=True,
-                                               discount=1.,
-                                               min_batch_size=1000,
-                                               learning_rate=0.005,
-                                               n_layers=2,
-                                               layers_size=64)
+    # create agent
+    agent_ = reinforce_agent.ReinforceAgent(
+        env,
+        max_rollout_length=1000,
+        log_metrics=True,
+        logdir=logdir,
+        reward_to_go=True,
+        baseline=True,
+        discount=1.0,
+        min_batch_size=1000,
+        learning_rate=0.005,
+        actor_n_layers=2,
+        actor_layers_size=64,
+        render=True,
+        render_freq=10,
+        log_freq=1
+    )
 
-    pgtrainer.train_agent(100)
+    # train agent
+    agent_.run_training_loop(1000)
 
 
 if __name__ == "__main__":

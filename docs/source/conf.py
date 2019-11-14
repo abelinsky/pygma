@@ -39,6 +39,11 @@ extensions = [
     'sphinx.ext.napoleon',
 ]
 
+# Napoleon settings
+# napoleon_use_admonition_for_examples = True
+# napoleon_use_admonition_for_notes = True
+# napoleon_use_admonition_for_references = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

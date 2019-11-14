@@ -1,12 +1,9 @@
 import os
 import time
 import pygma
-from pygma.trainers import base_trainers as trainers
 import gym
 import tensorflow as tf
-
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
+from pygma.rl.reinforce import agent as reinforce_agent
 
 
 def main():
@@ -40,24 +37,24 @@ def main():
     logdir = log_prefix + env_name + '_' + time.strftime('%d-%m-%Y_%H-%M-%S')
     logdir = os.path.join(data_path, logdir)
 
-    # set up env
+    # create env
     env = gym.make(env_name)
-    discrete = isinstance(env.action_space, gym.spaces.Discrete)
-    max_rollout_length = env.spec.max_episode_steps
 
-    # create trainer and train
-    pgtrainer = trainers.PolicyGradientTrainer(env,
-                                               is_discrete=discrete,
-                                               max_rollout_length=1000,
-                                               logdir=logdir,
-                                               reward_to_go=True,
-                                               discount=0.9,
-                                               min_batch_size=2500,
-                                               learning_rate=0.005,
-                                               n_layers=2,
-                                               layers_size=64,
-                                               render=True)
-    pgtrainer.train_agent(1000)
+    # create agent
+    agent_ = reinforce_agent.ReinforceAgent(
+        env,
+        discount=0.9,
+        min_batch_size=2000,
+        learning_rate=0.005,
+        reward_to_go=True,
+        baseline=False,
+        log_metrics=True,
+        logdir=logdir,
+        render_freq=100,
+        log_freq=1)
+
+    # train agent
+    agent_.run_training_loop(1000)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "MountainCar (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/MountainCar.py",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "Inverted Pendulum (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/InvertedPendulum.py",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
             "name": "HalfCheetah PG (continuous)",
             "type": "python",
             "request": "launch",

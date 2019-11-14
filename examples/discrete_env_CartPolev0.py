@@ -1,7 +1,7 @@
 import os
 import time
 import pygma
-from pygma.trainers import base_trainers as trainers
+from pygma.rl.reinforce import agent
 import gym
 
 
@@ -20,22 +20,23 @@ def main():
     logdir = log_prefix + env_name + '_' + time.strftime('%d-%m-%Y_%H-%M-%S')
     logdir = os.path.join(data_path, logdir)
 
-    # set up env
+    # create env
     env = gym.make(env_name)
-    discrete = isinstance(env.action_space, gym.spaces.Discrete)
-    max_rollout_length = env.spec.max_episode_steps
 
-    # create trainer and train
-    pgtrainer = trainers.PolicyGradientTrainer(env,
-                                               is_discrete=discrete,
-                                               max_rollout_length=max_rollout_length,
-                                               logdir=logdir,
-                                               reward_to_go=True,
-                                               baseline=True,
-                                               n_layers=2,
-                                               layers_size=32,
-                                               min_batch_size=5000)
-    pgtrainer.train_agent(1000)
+    # create agent
+    agent_ = agent.ReinforceAgent(
+        env,
+        reward_to_go=True,
+        baseline=True,
+        n_layers=2,
+        layers_size=32,
+        min_batch_size=5000,
+        log_metrics=True,
+        logdir=logdir,
+        render_freq=10)
+
+    # train agent
+    agent_.run_training_loop(1000)
 
 
 if __name__ == "__main__":

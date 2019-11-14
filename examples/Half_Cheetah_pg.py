@@ -1,12 +1,9 @@
 import os
 import time
 import pygma
-from pygma.trainers import base_trainers as trainers
 import gym
 import tensorflow as tf
-
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libGLEW.so
+from pygma.rl.reinforce import agent
 
 
 def main():
@@ -40,24 +37,23 @@ def main():
     logdir = log_prefix + env_name + '_' + time.strftime('%d-%m-%Y_%H-%M-%S')
     logdir = os.path.join(data_path, logdir)
 
-    # set up env
+    # create env
     env = gym.make(env_name)
-    discrete = isinstance(env.action_space, gym.spaces.Discrete)
 
-    # create trainer and train
-    pgtrainer = trainers.PolicyGradientTrainer(env,
-                                               is_discrete=discrete,
-                                               max_rollout_length=150,
-                                               logdir=logdir,
-                                               reward_to_go=True,
-                                               baseline=True,
-                                               discount=0.95,
-                                               n_layers=2,
-                                               layers_size=32,
-                                               min_batch_size=50000,
-                                               learning_rate=0.02,
-                                               render=False)
-    pgtrainer.train_agent(100)
+    # create agent
+    agent_ = agent.ReinforceAgent(env,
+                                  max_rollout_length=150,
+                                  discount=0.95,
+                                  actor_layers_size=32,
+                                  baseline_layers_size=32,
+                                  min_batch_size=50000,
+                                  learning_rate=0.02,
+                                  log_metrics=True,
+                                  logdir=logdir,
+                                  render_freq=100)
+
+    # train agent
+    agent_.run_training_loop(1000)
 
 
 if __name__ == "__main__":

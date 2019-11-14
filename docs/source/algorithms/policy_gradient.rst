@@ -126,8 +126,8 @@ algorithm, consists of the following steps:
 
 4.  Iterate through steps 1-3.
 
-Features and obstacles
-----------------------
+Main characteristics
+--------------------
 1.  We can use policy gradient algoritm in partially observed Markov
     Decision Process without modification (Markov property isn't used
     in derivation)
@@ -148,8 +148,17 @@ Pygma's example
 
 .. code-block:: python
 
-   import pygma
+   import gym
+   from pygma.rl.reinforce.agent import agent as reinforce_agent
 
+   # create env
+   env = gym.make(env_name)
+
+   # create agent
+   agent_ = reinforce_agent.ReinforceAgent(env)
+
+   # train agent
+   agent_.run_training_loop(1000)
 
 Suggested reading
 -----------------
