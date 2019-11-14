@@ -8,13 +8,13 @@ def readme():
 
 setuptools.setup(
     name='pygma',
-    version='0.2.dev1',
+    version='0.2.alpha0',
     author='Alexander Belinsky',
     author_email='a.v.belinsky@gmail.com',
-    description='Python mathematics for deep reinforcement learning on graphs',
+    description='Python machine learning on graphs',
     long_description=readme(),
     long_description_content_type="text/x-rst",
-    url='http://github.com/abelinsky',
+    url='https://github.com/abelinsky/pygma',
     license='MIT',
     packages=setuptools.find_packages(),
     classifiers=[

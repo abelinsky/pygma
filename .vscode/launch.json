@@ -1,0 +1,70 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "MountainCar (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/MountainCar.py",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "Inverted Pendulum (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/InvertedPendulum.py",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "HalfCheetah PG (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/Half_Cheetah_pg.py",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "LunarLander PG (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/LunarLander_v2_pg",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "Humanoid PG (continuous)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/Humanoid_v2_pg.py",
+            "console": "integratedTerminal",
+            "env": {
+                "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/home/ab/.mujoco/mjpro150/bin",
+                "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libGLEW.so"
+            }
+        },
+        {
+            "name": "CartPolev0 (discrete)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/CartPolev0_discrete.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

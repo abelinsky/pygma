@@ -18,8 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ==============================================================================
-"""Pygma root package."""
+"""Generic Pigma's Utilities."""
 
-import pygma.version
 
-__version__ = pygma.version.__version__
+def validate_kwargs(kwargs, allowed_kwargs,
+                    error_message='Keyword argument not understood:'):
+    """Checks that all keyword arguments are in the set of allowed keys."""
+    for kwarg in kwargs:
+        if kwarg not in allowed_kwargs:
+            raise TypeError(error_message, kwarg)

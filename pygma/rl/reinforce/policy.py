@@ -18,16 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ==============================================================================
-""" Policy gradient algorithm."""
-from pygma.agents.base_agent import BaseAgent
+"""Policy for ``PolicyGradientAgent``."""
+
+from abc import ABC, abstractmethod
+import tensorflow as tf
+from tensorflow import keras
+import tensorflow_probability as tfp
+from pygma.rl import base_policies
 
 
-class PolicyGradientAgent(BaseAgent):
-    """Policy gradient agent."""
+class ReinforcePolicy(base_policies.MLPPolicy):
+    """Policy of Policy Gradient Agent.
 
-    def __init__(self):
-        pass
+    See base class.
+    """
 
-    def train(self):
-        """See base class."""
-        raise NotImplementedError
+    def __init__(self, **kwargs):
+        super(ReinforcePolicy, self).__init__(**kwargs)

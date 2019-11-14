@@ -18,20 +18,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ==============================================================================
-"""Class to represent BaseAgent.
-
-BaseAgent is used to define an abstract class of pigma's ``Agent`` .
-"""
-from abc import ABC, abstractmethod
-
-
-class BaseAgent(ABC):
-    """Base class for pigma's agents."""
-
-    def train(self):
-        """Train agent's policy."""
-        raise NotImplementedError
-
-    def sample(self):
-        """Samples data."""
-        raise NotImplementedError
+"""Policy gradient algorithm."""

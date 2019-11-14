@@ -18,53 +18,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ==============================================================================
-"""Class to represent BasePolicy.
-
-BasePolicy is used to define a typical API to policy instances,
-used throughout the package.
-"""
+"""Utilities for logging to tensorboard."""
+import tensorflow as tf
 
 
-class BasePolicy:
-    """Base class for all policies of the package."""
+class Logger:
+    """Class for logging events.
 
-    def get_action(self, obs):
-        """Returns action for specific observation.
+    Attributes:
+      logdir: Directory where log to
+    """
 
-        Args:
-            obs: observation of the environment.
+    def __init__(self, logdir):
+        self.logdir = logdir
+        self.writer = tf.summary.create_file_writer(logdir)
 
-        Returns:
-            An action which is recommended by policy.    
-        """
-        raise NotImplementedError
-
-    def update(self, acs, obs):
-        """Updates policy.
+    def log_scalar(self, name, value, step):
+        """Logs one scalar value.
 
         Args:
-            acs: Actions
-            obs: Observations
+            name: Scalar value name, str
+            value: Scalar value, any
+            step: The number of current step, int
         """
-        raise NotImplementedError
+        with self.writer.as_default():
+            tf.summary.scalar(name, value, step=step)
 
-    def save(self, filename):
-        raise NotImplementedError
-
-    def restore(self, filename):
-        raise NotImplementedError
-
-    def test(self, a, b):
-        """Test docstring.
-
-        .. warning::
-            This function is intended as a template for documenting the code.
-
-        Args:
-            a (int): A
-            b (float): B
-
-        Returns:
-            bool: result
-        """
-        pass
+    def flush(self):
+        """Makes actual log."""
+        self.writer.flush()

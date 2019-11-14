@@ -15,6 +15,8 @@ over the gradient. We calculate this gradient through sampling *trajectories* -
 sets of environment's states and actions, recommended by our *policy*.
 Intuitively, we try to make "good" trajectories (with high *rewards*)
 more likely and "bad" trajectories (with low *rewards*) less likely.
+We try to increase the probabilities of choosing actions that lead
+to higher rewards, and decrease the probabilities of other actions.
 The whole math simply formalizes the notion of "trial and error".
 
 Mathematics
@@ -124,8 +126,8 @@ algorithm, consists of the following steps:
 
 4.  Iterate through steps 1-3.
 
-Features and obstacles
-----------------------
+Main characteristics
+--------------------
 1.  We can use policy gradient algoritm in partially observed Markov
     Decision Process without modification (Markov property isn't used
     in derivation)
@@ -141,18 +143,22 @@ Features and obstacles
 4.  Practical considerations: batch size, learning rates, optimizers.
 
 
-Pygma's classes
----------------
-.. autoclass:: pygma.agents.policy_gradient_agent.PolicyGradientAgent
-
-
 Pygma's example
 ---------------
 
 .. code-block:: python
 
-   import pygma
+   import gym
+   from pygma.rl.reinforce.agent import agent as reinforce_agent
 
+   # create env
+   env = gym.make(env_name)
+
+   # create agent
+   agent_ = reinforce_agent.ReinforceAgent(env)
+
+   # train agent
+   agent_.run_training_loop(1000)
 
 Suggested reading
 -----------------

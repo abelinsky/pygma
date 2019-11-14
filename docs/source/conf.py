@@ -25,7 +25,7 @@ copyright = '2019, Alexander Belinsky'
 author = 'Alexander Belinsky'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.dev1'  # pygma.__version__
+release = '0.2.alpha0'  # pygma.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -38,6 +38,11 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
 ]
+
+# Napoleon settings
+# napoleon_use_admonition_for_examples = True
+# napoleon_use_admonition_for_notes = True
+# napoleon_use_admonition_for_references = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
