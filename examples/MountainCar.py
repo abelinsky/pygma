@@ -46,20 +46,21 @@ def main():
     # create agent
     agent_ = reinforce_agent.ReinforceAgent(
         env,
-        max_rollout_length=1000,
         log_metrics=True,
         logdir=logdir,
         reward_to_go=True,
-        baseline=True,
+        # baseline=True,
         discount=1.0,
-        min_batch_size=1000,
+        min_batch_size=10000,
         learning_rate=0.005,
         actor_n_layers=2,
         actor_layers_size=64,
         render=True,
-        render_freq=10,
+        render_freq=100,
         log_freq=1
     )
+
+    # discount=0.99, min_batch_size=5000 is pretty good
 
     # train agent
     agent_.run_training_loop(1000)

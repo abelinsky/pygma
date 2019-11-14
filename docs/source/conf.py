@@ -25,7 +25,7 @@ copyright = '2019, Alexander Belinsky'
 author = 'Alexander Belinsky'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.dev1'  # pygma.__version__
+release = '0.2.alpha0'  # pygma.__version__
 
 
 # -- General configuration ---------------------------------------------------

@@ -60,10 +60,10 @@
             }
         },
         {
-            "name": "Discrete env policy gradient",
+            "name": "CartPolev0 (discrete)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/examples/discrete_env_CartPolev0.py",
+            "program": "${workspaceFolder}/examples/CartPolev0_discrete.py",
             "console": "integratedTerminal"
         }
     ]
